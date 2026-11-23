@@ -165,6 +165,19 @@ public class GroomerService {
     }
 
     public void updateGroomer(Groomer groomer) {
+        Groomer existing = groomer.getGid() == null ? null : groomerRepository.findByGid(groomer.getGid());
+        if (groomer.getAcceptingAppointments() == null) {
+            groomer.setAcceptingAppointments(existing == null ? true : existing.getAcceptingAppointments());
+        }
+        if (groomer.getTitle() == null && existing != null) {
+            groomer.setTitle(existing.getTitle());
+        }
+        if (groomer.getExperienceYears() == null && existing != null) {
+            groomer.setExperienceYears(existing.getExperienceYears());
+        }
+        if (groomer.getSpecialties() == null && existing != null) {
+            groomer.setSpecialties(existing.getSpecialties());
+        }
         groomerRepository.save(groomer);
     }
 

@@ -40,6 +40,19 @@ public class Groomer {
     @Column(columnDefinition = "varchar(255) default 'No Description'", nullable = true)
     private String description;
 
+    @Column(columnDefinition = "varchar(50)", nullable = true)
+    private String title;
+
+    @Column(columnDefinition = "int", nullable = true)
+    private Integer experienceYears;
+
+    @Column(columnDefinition = "varchar(500)", nullable = true)
+    private String specialties;
+
+    @Column(columnDefinition = "boolean default true", nullable = true)
+    private Boolean acceptingAppointments;
+
+
     public Groomer() {
     }
 

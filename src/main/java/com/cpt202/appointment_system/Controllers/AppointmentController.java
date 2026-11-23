@@ -218,21 +218,6 @@ public class AppointmentController {
 
         model.addAttribute("gList", gList);
         model.addAttribute("sortedRankgroomers", sortedRankgroomers);
-        
-        User user=userRepo.findByUsername(username);
-
-        //save pet to the model
-        List<Pet> petList=petService.listAllPets(user);
-        List<Pet> petShown = new ArrayList<Pet>();
-        for (Pet pet: petList){
-       if (pet.getSize().equals("") && pet.getType().equals("")){
-        }
-       else {
-         petShown.add(pet);
-       }
-             }
-             
-        model.addAttribute("petList", petShown);
         // save service list to the model
         List<ServiceType> serviceType = servicetypeRepo.findAll();
         model.addAttribute("serviceType", serviceType);

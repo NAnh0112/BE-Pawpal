@@ -2,7 +2,10 @@ package com.cpt202.appointment_system.Controllers;
 
 import java.security.Provider.Service;
 import java.util.ArrayList;
+import java.sql.Timestamp;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -10,6 +13,7 @@ import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -119,6 +123,68 @@ public class ManagerController {
         List<Groomer> groomers = groomerService.searchGroomerByName_M(keyword);
         model.addAttribute("groomers", groomers);
         return "MaintainGroomer";
+    }
+
+    @GetMapping("/api/groomers")
+    @ResponseBody
+    public List<Map<String, Object>> listGroomersForMobile() {
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Groomer groomer : groomerService.listAllGroomers()) {
+            int upcoming = 0;
+            for (Appointment appointment : AppointmentRepo.findByGid(groomer.getGid())) {
+                String status = appointment.getStatus();
+                boolean cancelled = status != null && status.toLowerCase().contains("cancel");
+                boolean future = appointment.getStartTime() != null && appointment.getStartTime().after(now);
+                if (future && !cancelled) upcoming++;
+            }
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("gid", groomer.getGid());
+            item.put("name", groomer.getName());
+            item.put("gender", groomer.getGender());
+            item.put("imageURL", groomer.getImageURL());
+            item.put("rank", groomer.getRank());
+            item.put("phoneNumber", groomer.getPhoneNumber());
+            item.put("address", extractAddress(groomer.getDescription()));
+            item.put("description", groomer.getDescription());
+            item.put("title", groomer.getTitle());
+            item.put("experienceYears", groomer.getExperienceYears());
+            item.put("specialties", groomer.getSpecialties());
+            item.put("acceptingAppointments",
+                    groomer.getAcceptingAppointments() == null || groomer.getAcceptingAppointments());
+            item.put("upcomingAppointmentCount", upcoming);
+            result.add(item);
+        }
+        return result;
+    }
+
+    @PostMapping("/api/groomers/{gid}/accepting")
+    @ResponseBody
+    public Map<String, Object> setGroomerAcceptingStatus(
+            @org.springframework.web.bind.annotation.PathVariable Integer gid,
+            @RequestParam("accepting") boolean accepting) {
+        Groomer groomer = GroomerRepo.findByGid(gid);
+        if (groomer == null) {
+            Map<String, Object> error = new LinkedHashMap<>();
+            error.put("error", "Không tìm thấy nhân viên.");
+            return error;
+        }
+        groomer.setAcceptingAppointments(accepting);
+        groomerService.updateGroomer(groomer);
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("gid", gid);
+        result.put("acceptingAppointments", accepting);
+        return result;
+    }
+
+    private String extractAddress(String description) {
+        if (description == null) return "";
+        for (String line : description.split("\\r?\\n")) {
+            if (line.trim().startsWith("Địa chỉ:")) {
+                return line.trim().replaceFirst("^Địa chỉ:\\s*", "").trim();
+            }
+        }
+        return "";
     }
 
     @GetMapping("maintainServiceType")
